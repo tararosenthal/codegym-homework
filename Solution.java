@@ -191,7 +191,7 @@ public class Solution {
     }
 
     public static boolean isBirthDate(String string) {
-        Pattern pattern = Pattern.compile("\\d+\\s\\d+\\s\\d+");
+        Pattern pattern = Pattern.compile("\\d\\d\\s\\d\\d\\s\\d\\d\\d\\d");
         Matcher matcher = pattern.matcher(string);
         return matcher.find();
     }
