@@ -111,7 +111,7 @@ public class Solution {
                         allPeople.add(Person.createMale(name, birthDate));
                     else
                         allPeople.add(Person.createFemale(name, birthDate));
-                    System.out.println(allPeople.size() - 1);
+                    System.out.println(allPeople.size() - 1);   //output index number of people added
                     name = null;
                     sex = null;
                     birthDate = null;
