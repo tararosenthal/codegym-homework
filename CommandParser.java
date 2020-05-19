@@ -16,8 +16,8 @@ Actually, I fixed something stupid, but my brain is still fried, hahaha
 public class CommandParser {
 
     public static PersonDTO parseCommand(PersonDTO personDTO, String[] input) throws ParseException {
-        if(personDTO != null) {return personDTO;}
-        parseNextPerson(input);
+        if (personDTO == null) { parseNextPerson(input);}
+        return personDTO;
     }
 
     public static void createPerson(String name, String sex, Date birthDate, String[] input) throws ParseException {
