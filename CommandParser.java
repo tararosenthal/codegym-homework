@@ -7,6 +7,10 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/* I realized that the way I did this does not allow me to return multiple objects using the parseCommand method.
+Also my brain is fried, so I'm gonna get back to this tommorow...
+*/
+
 public class CommandParser {
 
     public static void parseCommand(String[] input) throws ParseException {
