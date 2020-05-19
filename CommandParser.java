@@ -9,32 +9,35 @@ import java.util.regex.Pattern;
 
 /* I realized that the way I did this does not allow me to return multiple objects using the parseCommand method.
 Also my brain is fried, so I'm gonna get back to this tommorow...
+
+Actually, I fixed something stupid, but my brain is still fried, hahaha
 */
 
 public class CommandParser {
 
-    public static void parseCommand(String[] input) throws ParseException {
+    public static PersonDTO parseCommand(PersonDTO personDTO, String[] input) throws ParseException {
+        if(personDTO != null) {return personDTO;}
         parseNextPerson(input);
     }
 
     public static void createPerson(String name, String sex, Date birthDate, String[] input) throws ParseException {
         CreatePersonDTO createPersonDTO = new CreatePersonDTO(name, sex, birthDate);
-        parseNextPerson(input);
+        parseCommand(createPersonDTO, input);
     }
 
     public static void updatePerson(int id, String name, String sex, Date birthDate, String[] input) throws ParseException {
         UpdatePersonDTO updatePersonDTO = new UpdatePersonDTO(id, name, sex, birthDate);
-        parseNextPerson(input);
+        parseCommand(updatePersonDTO, input);
     }
 
     public static void deletePerson(int id, String[] input) throws ParseException {
         DeletePersonDTO deletePersonDTO = new DeletePersonDTO(id);
-        parseNextPerson(input);
+        parseCommand(deletePersonDTO, input);
     }
 
     public static void indexPerson(int id, String[] input) throws ParseException {
         IndexPersonDTO indexPersonDTO = new IndexPersonDTO(id);
-        parseNextPerson(input);
+        parseCommand(indexPersonDTO, input);
     }
 
     public static Date parseBirthDate(String birthDate) throws ParseException {
