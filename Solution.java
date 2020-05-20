@@ -1,58 +1,44 @@
 package com.codegym.task.task17.task1711;
+import java.util.*;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-/* 
-CRUD 2
-Batch CrUD: multiple Creations, Updates, Deletions.
+/*
+Object Oriented alternative
+You are procedurally looping over a string to execute a command as it's parsing a string.
 
-The program runs with one of the following sets of arguments:
--c name1 sex1 bd1 name2 sex2 bd2 ...
--u id1 name1 sex1 bd1 id2 name2 sex2 bd2 ...
--d id1 id2 id3 id4 ...
--i id1 id2 id3 id4 ...
+Identify the two main responsibilities/tasks of this program:
+1. Parsing the user input string into a command and person(s)
+2. Executing the desired command with the supplied person(s)
 
-Argument values:
-name (String)
-sex ("m" or "f")
-bd (birth date in the following format: 04 15 1990)
--c (adds all people with the specified arguments to the end of allPeople; displays their ids in order)
--u (updates the corresponding data of people with the specified ids)
--d (performs the logical deletion of the person with the specified id; replaces all of its data with null)
--i (displays information about all people with the specified ids: name sex bd)
+This means you should have a minimum of two classes: CommandParser and PersonRepository.
 
-The id corresponds to the index in the list.
-The birth date format is Apr 15 1990.
-All the people should be stored in allPeople.
-The order in which data is displayed corresponds to the order in which is input.
-Be sure the program is thread safe (works correctly with multiple threads without corrupting the data).
-Use Locale.ENGLISH as the second argument for SimpleDateFormat.
+CommandParser would have some method parseCommand(String). That should return some object that can be passed
+through the rest of the system. You never want to pass raw user input through your program. You want to have
+some type of Controller which transforms the user input into input objects -- or rather, you want a Controller
+to use a Parser to create those objects, which the Controller then passes to other objects (like the PersonRepo).
 
-Example output for the -i argument with two ids:
-Washington m Apr 15 1990
-Ross f Apr 25 1997
+So, you've identified an extra object: the input object that the Parser outputs and the Repo accepts as input.
+This is called a Data Transfer Object (DTO), a super simple, all-public properties, no methods object that models
+user input. So imagine we had a CreatePersonDTO:
 
-Requirements:
-1. The Solution class must contain a public volatile List<Person> field called allPeople.
-2. The Solution class must have a static block where two people are added to the allPeople list.
-3. With the -c argument, the program must add all people with the specified arguments to the
-end of the allPeople list, and display the id of each of them.
-4. With the -u argument, the program must update the data of the people with the specified ids
-in the allPeople list.
-5. With the -d argument, the program must perform the logical deletion of the people with the
-specified ids in the allPeople list.
-6. With the -i argument, the program should display data about all the people with the specified ids
-according to the format specified in the task.
-7. The Solution class's main method must contain a switch statement based on args[0].
-8. Each case label in the switch statement must have a synchronization block for allPeople.
+interface PersonDTO
 
+class CreatePersonDTO implements PersonDTO
++ name: String
++ birthDate: Date
++ sex: String
+
+Now, make your CommandParser.parseCommand(String) be able to transform the user input into the above, if it's
+the flag is -c. Make similar classes for the other three flags. Move your parse*() commands from this class into
+the Parser class and leverage them there. If it can't parse something, it throws the ParseException.
+
+Now, the controller (this Solution class) can take the PersonDTO returned by the CommandParser and pass it to the
+Repo. I would imagine having some PersonRepository.execute(PersonDTO). That method looks to see what specific
+class it is (e.g. CreatePersonDTO) and then calls the appropriate command, such as:
+PersonRepository.create(CreatePersonDTO)
+
+Once you have that done, you can refactor your Parser to return an array/list of PersonDTO since they may have
+passed in multiple people in the command string.
 */
 
 public class Solution {
@@ -65,145 +51,12 @@ public class Solution {
 
     public static void main(String[] args) {
         try {
-        switch(args[0]) {
-            case "-c":
-                synchronized (allPeople) {
-                    createPeople(args);
-                }
-                break;
-            case "-u":
-                synchronized (allPeople) {
-                    updatePeople(args);
-                }
-                break;
-            case "-d":
-                synchronized (allPeople) {
-                    deletePeople(args);
-                }
-                break;
-            case "-i":
-                synchronized (allPeople) {
-                    indexPeople(args);
-                }
-                break;
-            default:
-                System.out.println("Invalid argument");
-        } } catch (Exception e) {
-                System.out.println(e.getMessage());
+            ArrayList<PersonDTO> personDTOs = CommandParser.parseCommand(args);
+            for (PersonDTO personDTO : personDTOs) {
+                PersonRepository.assign(personDTO);
             }
-    }
-
-    public static void createPeople(String[] args) throws ParseException {
-        String name = null;
-        String sex = null;
-        Date birthDate = null;
-
-        for (String string: args) {
-            if(!string.contentEquals("-c")) {
-                    if (isBirthDate(string))
-                        birthDate = parseBirthDate(string);
-                    else if (isSex(string))
-                        sex = string;
-                    else
-                        name = string;
-                if(name != null && sex != null && birthDate!= null) {
-                    if (sex.contentEquals("m"))
-                        allPeople.add(Person.createMale(name, birthDate));
-                    else
-                        allPeople.add(Person.createFemale(name, birthDate));
-                    System.out.println(allPeople.size() - 1);   //output index number of people added
-                    name = null;
-                    sex = null;
-                    birthDate = null;
-                }
-            }
+        } catch (Exception e) {
+                System.out.println(Arrays.toString(e.getStackTrace()));}
         }
     }
 
-    public static void updatePeople(String[] args) throws ParseException {
-
-        String name = null;
-        Sex sex = null;
-        Date birthDate = null;
-        Integer id = null;
-
-        for (String string: args) {
-            if(!string.contentEquals("-u")) {
-                    if (isBirthDate(string))
-                        birthDate = parseBirthDate(string);
-                    else if (isSex(string)) {
-                        if (string.contentEquals("m"))
-                            sex = Sex.MALE;
-                        else
-                            sex = Sex.FEMALE;
-                    } else if (isID(string))
-                        id = Integer.parseInt(string);
-                    else
-                        name = string;
-
-                if(id != null && name != null && sex != null && birthDate != null) {
-                    final Person PERSON = allPeople.get(id);
-                    PERSON.setName(name);
-                    PERSON.setSex(sex);
-                    PERSON.setBirthDate(birthDate);
-                    name = null;
-                    sex = null;
-                    birthDate = null;
-                    id = null;
-                }
-            }
-        }
-    }
-
-    public static void deletePeople(String[] args) {
-        for (String string:args) {
-            if(!string.contentEquals("-d")) {
-                int id = Integer.parseInt(string);
-                allPeople.get(id).setName(null);
-                allPeople.get(id).setSex(null);
-                allPeople.get(id).setBirthDate(null);
-            }
-        }
-    }
-
-    public static void indexPeople(String[] args) {
-        for (String string:args) {
-            if(!string.contentEquals("-i")) {
-                int id = Integer.parseInt(string);
-                String name = allPeople.get(id).getName();
-                Sex enumSex = allPeople.get(id).getSex();
-                String sex;
-                {
-                    if (enumSex.equals(Sex.MALE))
-                        sex = "m";
-                    else
-                        sex = "f";
-                }
-                String birthDate = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH)
-                        .format(allPeople.get(id).getBirthDate());
-                System.out.println(String.format("%1s%2s %3s", name, sex, birthDate));
-            }
-        }
-    }
-
-    public static Date parseBirthDate(String birthDate) throws ParseException {
-        return new SimpleDateFormat("MM dd yyyy", Locale.ENGLISH).parse(birthDate);
-    }
-
-    public static boolean isBirthDate(String string) {
-        Pattern pattern = Pattern.compile("\\d\\d\\s\\d\\d\\s\\d\\d\\d\\d");
-        Matcher matcher = pattern.matcher(string);
-        return matcher.find();
-    }
-
-    public static boolean isSex(String string) {
-        return string.contentEquals("m")
-                || string.contentEquals("f");
-    }
-
-    public static boolean isID(String string) {
-        Pattern pattern = Pattern.compile("\\d+");
-        Matcher matcher = pattern.matcher(string);
-        return matcher.find();
-    }
-}
